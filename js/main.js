@@ -493,16 +493,16 @@ var mapView = {
       user = self.user_data[self.settings.users[user_id]];
 
     for (var i = 0; i < user.bagCandy.length; i++) {
-      var checkCandy = user.bagCandy[i].inventory_item_data.candy.family_id;
+      var checkCandy = user.bagCandy[i].inventory_item_data.pokemon_family.family_id;
       if (self.pokemoncandyArray[p_num] === checkCandy) {
-        return (user.bagCandy[i].inventory_item_data.candy.candy || 0);
+        return (user.bagCandy[i].inventory_item_data.pokemon_family.candy || 0);
       }
     }
   },
   invSuccess: function(data, user_index) {
     var self = mapView,
       userData = self.user_data[self.settings.users[user_index]],
-      bagCandy = self.filter(data, 'candy'),
+      bagCandy = self.filter(data, 'pokemon_family'),
       bagItems = self.filter(data, 'item'),
       bagPokemon = self.filter(data, 'pokemon_data'),
       pokedex = self.filter(data, 'pokedex_entry'),
@@ -764,6 +764,7 @@ var mapView = {
   trainerFunc: function(data, user_index) {
     var self = mapView,
       coords = self.pathcoords[self.settings.users[user_index]][self.pathcoords[self.settings.users[user_index]].length - 1];
+    var cur = new Date();
     for (var i = 0; i < data.cells.length; i++) {
       var cell = data.cells[i];
       if (data.cells[i].forts != undefined) {
@@ -777,7 +778,8 @@ var mapView = {
                   lat: parseFloat(fort.latitude),
                   lng: parseFloat(fort.longitude)
                 },
-                icon: 'image/forts/img_pokestop.png'
+                icon: fort.cooldown_complete_timestamp_ms && fort.cooldown_complete_timestamp_ms > cur.getTime() ?
+                    'image/forts/img_pokestop_cooldown.png' : 'image/forts/img_pokestop.png'
               });
             } else {
               self.forts[fort.id] = new google.maps.Marker({
@@ -809,7 +811,15 @@ var mapView = {
                 infowindow.open(map, marker);
               };
             })(self.forts[fort.id], contentString, self.info_windows[fort.id]));
+          } else {
+            if (fort.type === 1) {
+              self.forts[fort.id].setIcon(
+                fort.cooldown_complete_timestamp_ms && fort.cooldown_complete_timestamp_ms > cur.getTime() ?
+                'image/forts/img_pokestop_cooldown.png' : 'image/forts/img_pokestop.png'
+              );
+            }
           }
+
         }
       }
     }
@@ -844,7 +854,7 @@ var mapView = {
           lat: parseFloat(data.lat),
           lng: parseFloat(data.lng)
         },
-        icon: 'image/trainer/' + self.trainerSex[randomSex] + Math.floor(Math.random() * self.numTrainers[randomSex]) + '.png',
+        // icon: 'image/trainer/' + self.trainerSex[randomSex] + Math.floor(Math.random() * self.numTrainers[randomSex]) + '.png',
         zIndex: 2,
         label: self.settings.users[user_index],
         clickable: false
